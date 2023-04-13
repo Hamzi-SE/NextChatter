@@ -1,24 +1,26 @@
-import FriendRequestsSidebarOption from '@/components/FriendRequestsSidebarOption';
-import SentRequestsSidebarOption from '@/components/SentRequestsSidebarOption';
-import { Icon, Icons } from '@/components/Icons';
-import SignOutButton from '@/components/SignOutButton';
-import { fetchRedis } from '@/helpers/redis';
-import { authOptions } from '@/lib/auth';
-import { getServerSession } from 'next-auth';
-import Image from 'next/image';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { FC, ReactNode } from 'react';
+import FriendRequestsSidebarOption from '@/components/FriendRequestsSidebarOption'
+import { Icon, Icons } from '@/components/Icons'
+import SentRequestsSidebarOption from '@/components/SentRequestsSidebarOption'
+import SidebarChatList from '@/components/SidebarChatList'
+import SignOutButton from '@/components/SignOutButton'
+import { getFriendsByUserId } from '@/helpers/get-friends-by-user-id'
+import { fetchRedis } from '@/helpers/redis'
+import { authOptions } from '@/lib/auth'
+import { getServerSession } from 'next-auth'
+import Image from 'next/image'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { ReactNode } from 'react'
 
 interface LayoutProps {
-	children: ReactNode;
+	children: ReactNode
 }
 
 interface SidebarOption {
-	id: number;
-	name: string;
-	Icon: Icon;
-	href: string;
+	id: number
+	name: string
+	Icon: Icon
+	href: string
 }
 
 const sidebarOptions: SidebarOption[] = [
@@ -28,14 +30,16 @@ const sidebarOptions: SidebarOption[] = [
 		href: '/dashboard/add',
 		Icon: 'UserPlus',
 	},
-];
+]
 
 const Layout = async ({ children }: LayoutProps) => {
-	const session = await getServerSession(authOptions);
-	if (!session) notFound();
+	const session = await getServerSession(authOptions)
+	if (!session) notFound()
 
-	const unseenRequestCount = ((await fetchRedis('smembers', `user:${session.user.id}:incoming_friend_requests`)) as User[]).length;
-	const sentRequestCount = ((await fetchRedis('smembers', `user:${session.user.id}:outgoing_friend_requests`)) as User[]).length;
+	const friends = await getFriendsByUserId(session.user.id)
+
+	const unseenRequestCount = ((await fetchRedis('smembers', `user:${session.user.id}:incoming_friend_requests`)) as User[]).length
+	const sentRequestCount = ((await fetchRedis('smembers', `user:${session.user.id}:outgoing_friend_requests`)) as User[]).length
 
 	return (
 		<div className='w-full flex h-screen'>
@@ -44,20 +48,19 @@ const Layout = async ({ children }: LayoutProps) => {
 					<Icons.Logo className='h-8 w-auto text-indigo-600' />
 				</Link>
 
-				<div className='text-xs font-semibold leading-6 text-gray-400'>Your chats</div>
+				{friends.length > 0 && <div className='text-xs font-semibold leading-6 text-gray-400'>Your chats</div>}
 
 				<nav className='flex flex-1 flex-col '>
 					<ul role='list' className='flex flex-1 flex-col gap-y-7'>
 						<li>
-							{/* Chats that this user has -------- TODO */}
-							Chat
+							<SidebarChatList friends={friends} sessionId={session.user.id} />
 						</li>
 						<li>
 							<div className='text-xs font-semibold leading-6 text-gray-400'>Overview</div>
 
 							<ul role='list' className='-mx-2 mt-2 space-y-1 '>
-								{sidebarOptions.map((option) => {
-									const Icon = Icons[option.Icon];
+								{sidebarOptions.map(option => {
+									const Icon = Icons[option.Icon]
 									return (
 										<li key={`option-${option.id}`}>
 											<Link
@@ -70,17 +73,17 @@ const Layout = async ({ children }: LayoutProps) => {
 												<span className='truncate'>{option.name}</span>
 											</Link>
 										</li>
-									);
+									)
 								})}
+
+								<li>
+									<FriendRequestsSidebarOption sessionId={session.user.id} initialUnseenRequestCount={unseenRequestCount} />
+								</li>
+
+								<li>
+									<SentRequestsSidebarOption sessionId={session.user.id} initialSentRequestCount={sentRequestCount} />
+								</li>
 							</ul>
-						</li>
-
-						<li>
-							<FriendRequestsSidebarOption sessionId={session.user.id} initialUnseenRequestCount={unseenRequestCount} />
-						</li>
-
-						<li>
-							<SentRequestsSidebarOption sessionId={session.user.id} initialSentRequestCount={sentRequestCount} />
 						</li>
 
 						<li className='-mx-6 mt-auto flex items-center'>
@@ -107,7 +110,7 @@ const Layout = async ({ children }: LayoutProps) => {
 			</div>
 			{children}
 		</div>
-	);
-};
+	)
+}
 
-export default Layout;
+export default Layout

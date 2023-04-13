@@ -62,7 +62,7 @@ const page: FC<pageProps> = ({}) => {
 									<path d='M1 1h22v22H1z' fill='none' />
 								</svg>
 							)}
-							Sign in with Google
+							Continue with Google
 						</Button>
 					</div>
 				</div>
