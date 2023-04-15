@@ -1,11 +1,9 @@
 'use client'
 
-import { getChatMessages, getLatestChatMessage } from '@/helpers/get-chat-messages'
-import { db } from '@/lib/db'
 import { pusherClient } from '@/lib/pusher'
 import { chatHrefConstructor, toPusherKey } from '@/lib/utils'
 import Image from 'next/image'
-import { notFound, usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { FC, useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import UnseenChatToast from './UnseenChatToast'
@@ -23,6 +21,7 @@ interface ExtendedMessage extends Message {
 const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
 	const [unseenMessages, setUnseenMessages] = useState<Message[]>([])
 	// const [lastMessages, setLastMessages] = useState<Message[]>([]) -- TODO
+	const [activeChats, setActiveChats] = useState<User[]>(friends)
 
 	const router = useRouter()
 	const pathname = usePathname()
@@ -31,8 +30,8 @@ const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
 		pusherClient.subscribe(toPusherKey(`user:${sessionId}:chats`))
 		pusherClient.subscribe(toPusherKey(`user:${sessionId}:friends`))
 
-		const newFriendHandler = () => {
-			router.refresh()
+		const newFriendHandler = (newFriend: User) => {
+			setActiveChats(prev => [...prev, newFriend])
 		}
 
 		const chatHandler = (message: ExtendedMessage) => {
@@ -61,6 +60,9 @@ const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
 		return () => {
 			pusherClient.unsubscribe(toPusherKey(`user:${sessionId}:chats`))
 			pusherClient.unsubscribe(toPusherKey(`user:${sessionId}:friends`))
+
+			pusherClient.unbind('new_message', chatHandler)
+			pusherClient.unbind('new_friend', newFriendHandler)
 		}
 	}, [sessionId, pathname, router])
 
@@ -74,7 +76,7 @@ const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
 
 	return (
 		<ul role='list' className='max-h-[25rem] overflow-y-auto -mx-2 space-y-1'>
-			{friends.sort().map(friend => {
+			{activeChats.sort().map(friend => {
 				const unseenMessagesCount = unseenMessages.filter(unseenMessage => unseenMessage.senderId === friend.id).length
 				return (
 					<li key={`friend-${friend.id}`}>
