@@ -1,16 +1,16 @@
-'use client';
+'use client'
 
-import { Users } from 'lucide-react';
-import Link from 'next/link';
-import { FC, useState } from 'react';
+import { Users } from 'lucide-react'
+import Link from 'next/link'
+import { FC, useState } from 'react'
 
 interface SentRequestsSidebarOptionProps {
-	sessionId: string;
-	initialSentRequestCount: number;
+	sessionId: string
+	initialSentRequestCount: number
 }
 
 const SentRequestsSidebarOption: FC<SentRequestsSidebarOptionProps> = ({ sessionId, initialSentRequestCount }) => {
-	const [unseenSentRequestCount, setUnseenSentRequestCount] = useState<number>(initialSentRequestCount);
+	const [unseenSentRequestCount, setUnseenSentRequestCount] = useState<number>(initialSentRequestCount)
 
 	return (
 		<Link
@@ -27,7 +27,7 @@ const SentRequestsSidebarOption: FC<SentRequestsSidebarOptionProps> = ({ session
 				</span>
 			)}
 		</Link>
-	);
-};
+	)
+}
 
-export default SentRequestsSidebarOption;
+export default SentRequestsSidebarOption

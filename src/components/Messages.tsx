@@ -1,21 +1,43 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { pusherClient } from '@/lib/pusher'
+import { cn, toPusherKey } from '@/lib/utils'
 import { Message } from '@/lib/validations/message'
 import Image from 'next/image'
-import { FC, useRef, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
+import { format } from 'date-fns'
 
 interface MessagesProps {
 	initialMessages: Message[]
 	sessionId: string
+	chatId: string
 	sessionImage: string | null | undefined
 	chatPartner: User
 }
 
-const Messages: FC<MessagesProps> = ({ initialMessages, sessionId, sessionImage, chatPartner }) => {
+const Messages: FC<MessagesProps> = ({ initialMessages, sessionId, chatId, sessionImage, chatPartner }) => {
 	const [messages, setMessages] = useState<Message[]>(initialMessages)
 
 	const scrollDownRef = useRef<HTMLDivElement | null>(null)
+
+	const formatTimestamp = (timestamp: number) => {
+		return format(timestamp, 'HH:mm')
+	}
+
+	useEffect(() => {
+		pusherClient.subscribe(toPusherKey(`chat:${chatId}`))
+
+		const messageHandler = (message: Message) => {
+			setMessages(prev => [message, ...prev])
+		}
+
+		pusherClient.bind('incoming-message', messageHandler)
+
+		return () => {
+			pusherClient.unsubscribe(toPusherKey(`chat:${chatId}`))
+			pusherClient.unbind('incoming-message', messageHandler)
+		}
+	}, [])
 
 	return (
 		<div
@@ -43,10 +65,7 @@ const Messages: FC<MessagesProps> = ({ initialMessages, sessionId, sessionImage,
 										'rounded-br-none': isCurrentUser && !hasNextMessageFromSameUser,
 										'rounded-bl-none': !isCurrentUser && !hasNextMessageFromSameUser,
 									})}>
-									{message.text}{' '}
-									<span className='ml-2 text-xs text-gray-400'>
-										{new Date(message.timestamp).toLocaleTimeString()} - {new Date(message.timestamp).toLocaleDateString()}
-									</span>
+									{message.text} <span className='ml-2 text-xs text-gray-400'>{formatTimestamp(message.timestamp)}</span>
 								</span>
 							</div>
 
