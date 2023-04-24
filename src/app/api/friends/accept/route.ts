@@ -41,8 +41,8 @@ export async function POST(req: Request) {
 
 		// notify both users that they have a new friend
 		await Promise.all([
-			pusherServer.trigger(toPusherKey(`user:${idToAdd}:friends`), 'new_friend', user),
-			pusherServer.trigger(toPusherKey(`user:${session.user.id}:friends`), 'new_friend', friend),
+			await pusherServer.trigger(toPusherKey(`user:${idToAdd}:friends`), 'new_friend', user),
+			await pusherServer.trigger(toPusherKey(`user:${session.user.id}:friends`), 'new_friend', friend),
 
 			db.sadd(`user:${session.user.id}:friends`, idToAdd), // Add the user to the friends list
 

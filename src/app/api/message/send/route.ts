@@ -45,9 +45,9 @@ export async function POST(req: Request, res: Response) {
 		const message = messageValidator.parse(messageData)
 
 		// notify all connected chat room clients
-		pusherServer.trigger(toPusherKey(`chat:${chatId}`), 'incoming-message', message)
+		await pusherServer.trigger(toPusherKey(`chat:${chatId}`), 'incoming-message', message)
 
-		pusherServer.trigger(toPusherKey(`user:${friendId}:chats`), 'new_message', {
+		await pusherServer.trigger(toPusherKey(`user:${friendId}:chats`), 'new_message', {
 			...message,
 			senderImage: sender.image,
 			senderName: sender.name,
